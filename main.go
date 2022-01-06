@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
+	"time"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
@@ -12,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 )
 
-type Map struct {
+type lifeMap struct {
 	img     *image.RGBA
 	x       int
 	y       int
@@ -20,8 +21,8 @@ type Map struct {
 	nextMap [][]uint8
 }
 
-func NewMap(x, y int) Map {
-	m := Map{}
+func NewMap(x, y int) lifeMap {
+	m := lifeMap{}
 	m.img = image.NewRGBA(image.Rect(0, 0, x, y))
 	m.x = x
 	m.y = y
@@ -36,10 +37,10 @@ func NewMap(x, y int) Map {
 	return m
 }
 
-func (m *Map) Reset() {
+func (m *lifeMap) Reset() {
 	for i := 0; i < m.x; i++ {
 		for j := 0; j < m.y; j++ {
-			if uint8(rand.Intn(5)) == 0 {
+			if uint8(rand.Intn(2)) == 0 {
 				m.curMap[i][j] = 1
 			} else {
 				m.curMap[i][j] = 0
@@ -48,7 +49,7 @@ func (m *Map) Reset() {
 	}
 }
 
-func (m *Map) GetNeighborCount(row, col int) uint8 {
+func (m *lifeMap) GetNeighborCount(row, col int) uint8 {
 	var count uint8 = 0
 	if m.GetCur(row-1, col-1) != 0 {
 		count++
@@ -77,30 +78,30 @@ func (m *Map) GetNeighborCount(row, col int) uint8 {
 	return count
 }
 
-func (m *Map) SetNext(row, col int, val uint8) {
+func (m *lifeMap) SetNext(row, col int, val uint8) {
 	if row < 0 || col < 0 || row >= m.x || col >= m.y {
 		return
 	}
 	m.nextMap[row][col] = val
 }
 
-func (m *Map) GetCur(row, col int) uint8 {
+func (m *lifeMap) GetCur(row, col int) uint8 {
 	if row < 0 || col < 0 || row >= m.x || col >= m.y {
 		return 0
 	}
 	return m.curMap[row][col]
 }
 
-func (m *Map) GameCycle() {
+func (m *lifeMap) GameCycle() {
 	for x := 0; x < m.x; x++ {
 		for y := 0; y < m.y; y++ {
 			count := m.GetNeighborCount(x, y)
 			switch {
 			case count >= 4:
 				m.SetNext(x, y, 0)
-			case count == 3:
+			case count >= 3:
 				m.SetNext(x, y, 1)
-			case count == 2:
+			case count >= 2:
 				m.SetNext(x, y, m.GetCur(x, y))
 			case count <= 1:
 				m.SetNext(x, y, 0)
@@ -116,7 +117,7 @@ func (m *Map) GameCycle() {
 	}
 }
 
-func (m *Map) PrintMap() {
+func (m *lifeMap) PrintMap() {
 	for x := 0; x < m.x; x++ {
 		for y := 0; y < m.y; y++ {
 			if m.GetCur(x, y) == 0 {
@@ -152,7 +153,7 @@ func main() {
 			m.GameCycle()
 			m.PrintMap()
 			content.Refresh()
-			// time.Sleep(100 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}()
 	lifeWindows.CenterOnScreen()
