@@ -1,10 +1,7 @@
 package main
 
 import (
-	"image"
-	"image/color"
-	"log"
-	"math/rand"
+	"lifeGame/lifeMap"
 	"time"
 
 	"fyne.io/fyne/v2/app"
@@ -13,136 +10,19 @@ import (
 	"fyne.io/fyne/v2/layout"
 )
 
-type lifeMap struct {
-	img     *image.RGBA
-	x       int
-	y       int
-	curMap  [][]uint8
-	nextMap [][]uint8
-}
-
-func NewMap(x, y int) lifeMap {
-	m := lifeMap{}
-	m.img = image.NewRGBA(image.Rect(0, 0, x, y))
-	m.x = x
-	m.y = y
-
-	for i := 0; i < x; i++ {
-		ar1 := make([]uint8, y)
-		ar2 := make([]uint8, y)
-		m.curMap = append(m.curMap, ar1)
-		m.nextMap = append(m.nextMap, ar2)
-	}
-
-	return m
-}
-
-func (m *lifeMap) Reset() {
-	for i := 0; i < m.x; i++ {
-		for j := 0; j < m.y; j++ {
-			if uint8(rand.Intn(2)) == 0 {
-				m.curMap[i][j] = 1
-			} else {
-				m.curMap[i][j] = 0
-			}
-		}
-	}
-}
-
-func (m *lifeMap) GetNeighborCount(row, col int) uint8 {
-	var count uint8 = 0
-	if m.GetCur(row-1, col-1) != 0 {
-		count++
-	}
-	if m.GetCur(row-1, col) != 0 {
-		count++
-	}
-	if m.GetCur(row-1, col+1) != 0 {
-		count++
-	}
-	if m.GetCur(row, col-1) != 0 {
-		count++
-	}
-	if m.GetCur(row, col+1) != 0 {
-		count++
-	}
-	if m.GetCur(row+1, col-1) != 0 {
-		count++
-	}
-	if m.GetCur(row+1, col) != 0 {
-		count++
-	}
-	if m.GetCur(row+1, col+1) != 0 {
-		count++
-	}
-	return count
-}
-
-func (m *lifeMap) SetNext(row, col int, val uint8) {
-	if row < 0 || col < 0 || row >= m.x || col >= m.y {
-		return
-	}
-	m.nextMap[row][col] = val
-}
-
-func (m *lifeMap) GetCur(row, col int) uint8 {
-	if row < 0 || col < 0 || row >= m.x || col >= m.y {
-		return 0
-	}
-	return m.curMap[row][col]
-}
-
-func (m *lifeMap) GameCycle() {
-	for x := 0; x < m.x; x++ {
-		for y := 0; y < m.y; y++ {
-			count := m.GetNeighborCount(x, y)
-			switch {
-			case count >= 4:
-				m.SetNext(x, y, 0)
-			case count >= 3:
-				m.SetNext(x, y, 1)
-			case count >= 2:
-				m.SetNext(x, y, m.GetCur(x, y))
-			case count <= 1:
-				m.SetNext(x, y, 0)
-			default:
-				log.Println("error count", count)
-			}
-		}
-	}
-	for x := 0; x < m.x; x++ {
-		for y := 0; y < m.y; y++ {
-			m.curMap[x][y] = m.nextMap[x][y]
-		}
-	}
-}
-
-func (m *lifeMap) PrintMap() {
-	for x := 0; x < m.x; x++ {
-		for y := 0; y < m.y; y++ {
-			if m.GetCur(x, y) == 0 {
-				m.img.Set(x, y, color.White)
-			} else {
-				m.img.Set(x, y, color.Black)
-			}
-		}
-	}
-}
-
 const (
-	dx = 400
-	dy = 400
+	dx = 80
+	dy = 80
 )
 
 func main() {
-	m := NewMap(dx, dy)
-	m.Reset()
+	m := lifeMap.NewMap(dx, dy, 5)
 	m.PrintMap()
 
 	lifeApp := app.New()
 	lifeWindows := lifeApp.NewWindow("lifeGame")
 
-	lifeImg := canvas.NewImageFromImage(m.img)
+	lifeImg := canvas.NewImageFromImage(m.Img)
 	lifeImg.FillMode = canvas.ImageFillOriginal
 
 	content := container.New(layout.NewCenterLayout(), lifeImg)
